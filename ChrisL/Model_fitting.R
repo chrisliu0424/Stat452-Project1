@@ -4,6 +4,8 @@ library(glmnet)
 library(pls)
 library(mgcv)
 library(randomForest)
+library(gbm)
+library(nnet)
 source("Helper Functions.R")
 
 
@@ -75,6 +77,28 @@ for (i in 1:R) {
     cv.rf.pred = predict(cv.rf,newdata = valid_df)
     MSPE[current_row,7] = get.MSPE(valid_df[,"Y"], cv.rf.pred)
     
+    
+    
+    # Boosting
+    fit.gbm.best = gbm(Y ~ ., data =train_df, distribution = "gaussian", 
+                       n.trees = 10000, interaction.depth = 4, shrinkage = 0.1, bag.fraction = 0.6)
+    n.trees.best = gbm.perf(fit.gbm.best, plot.it = F) * 2 # Number of trees
+    pred.best = predict(fit.gbm.best, valid_df, n.trees.best)
+    MSPE[current_row,8] = get.MSPE(valid_df[,"Y"], pred.best)
+    
+    #NN
+    X.train.raw =train_df[,-1]
+    X.train = rescale(X.train.raw, X.train.raw)
+    Y.train = train_df$Y
+    
+    X.valid.raw = valid_df[,-1]
+    X.valid = rescale(X.valid.raw, X.train.raw)
+    Y.valid = valid_df$Y
+   
+    fit.nnet = nnet(y = Y.train, x = X.train, linout = TRUE, size = 1,
+                    decay = 0.1, maxit = 500)
+    pred.nnet = predict(fit.nnet, X.valid)
+    MSPE[current_row,9] = get.MSPE(Y.valid, pred.nnet)
     current_row = current_row + 1
   }
 }
