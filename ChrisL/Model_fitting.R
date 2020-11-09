@@ -21,7 +21,7 @@ V = 10    # 10-fold Cross-Validation
 R = 5     # 5 Replicate
 n = nrow(X)
 folds = get.folds(n,V) 
-names = c('lm','StepWise','Ridge',"LASSO-min","LASSO-1SE","PLS","RF")
+names = c('lm','StepWise','Ridge',"LASSO-min","LASSO-1SE","PLS","RF","Boosting","NN")
 MSPE = matrix(NA,ncol = length(names), nrow = V*R)
 colnames(MSPE) <- names
 
@@ -73,7 +73,7 @@ for (i in 1:R) {
     MSPE[current_row,6] = get.MSPE(valid_df[,"Y"], cv.pls.pred)
     
     # RF
-    cv.rf <- randomForest(Y~.,data=train_df)
+    cv.rf <- randomForest(Y~.,data=train_df,mtry = 11, nodesize = 11,ntree = 500)
     cv.rf.pred = predict(cv.rf,newdata = valid_df)
     MSPE[current_row,7] = get.MSPE(valid_df[,"Y"], cv.rf.pred)
     
@@ -109,9 +109,11 @@ boxplot(MSPE/low.s, ylim = c(1,1.5),
 
 ######################################### Random Forest Tuning #############################################################
 ######################################### Code From Tom's Lecture ##########################################################
+# Default is mtry = 5, nodesize = 5
+# Best so far 11|11
 reps=20 # Doing lots of reps here because it's cheap
-varz = 3:12
-nodez = c(4,5,6,7,8,9,10)
+varz = c(9,10,11,12)
+nodez = c(11,12,13,14,15,16,17,18,19)
 
 NS = length(nodez)
 M = length(varz)
@@ -138,5 +140,11 @@ min.oob = apply(rf.oob, 2, min)
 x11()
 boxplot(t(rf.oob)/min.oob, use.cols=TRUE, las=2, 
         main="RF Tuning Variables and Node Sizes")
-write.table(rf.oob,"RF_tuned_2.txt",sep = ",")
+write.table(rf.oob,"ChrisL/RF_tuned_3.txt",sep = ",")
 ##################################################################################################################################
+rf.oob = read.table("ChrisL/RF_tuned_3.txt",sep = ",")
+x11()
+mean.oob = apply(rf.oob, 1, mean)
+min.oob = apply(rf.oob, 2, min)
+boxplot(t(rf.oob)/min.oob, use.cols=TRUE, las=2, 
+        main="RF Tuning Variables and Node Sizes")

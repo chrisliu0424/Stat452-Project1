@@ -24,3 +24,12 @@ get.folds = function(n, K) {
   
   return(folds.rand)
 }
+
+rescale <- function(x1,x2){
+  for(col in 1:ncol(x1)){
+    a <- min(x2[,col])
+    b <- max(x2[,col])
+    x1[,col] <- (x1[,col]-a)/(b-a)
+  }
+  x1
+}
