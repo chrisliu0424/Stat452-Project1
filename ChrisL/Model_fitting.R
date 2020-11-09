@@ -95,8 +95,8 @@ for (i in 1:R) {
     X.valid = rescale(X.valid.raw, X.train.raw)
     Y.valid = valid_df$Y
    
-    fit.nnet = nnet(y = Y.train, x = X.train, linout = TRUE, size = 1,
-                    decay = 0.1, maxit = 500)
+    fit.nnet = nnet(y = Y.train, x = X.train, linout = TRUE, size = 3,
+                    decay = 1.5, maxit = 500)
     pred.nnet = predict(fit.nnet, X.valid)
     MSPE[current_row,9] = get.MSPE(Y.valid, pred.nnet)
     current_row = current_row + 1
