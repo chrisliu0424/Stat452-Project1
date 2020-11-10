@@ -6,9 +6,15 @@ library(mgcv)
 library(randomForest)
 library(gbm)
 library(nnet)
+# Parallel computing
+library(doParallel)
+# Change this number for the exact computer clusters you have in you computer
+# usually CPU core *2 
+cl <- makePSOCKcluster(12)
+registerDoParallel(cl)
 
 df = read.csv("Data2020.csv")
-set.seed(100)
+# set.seed(100)
 custom =trainControl(method="repeatedcv",
                      number=10,
                      repeats=5,
@@ -38,33 +44,48 @@ step <- train(Y ~.,df,
               trControl = custom, trace = FALSE)
 plot(varImp(step,scale=F))
 
-#boosting(don't further tune, will take a long time)
-tune.boosting <- expand.grid(shrinkage = 0.1, 
-                  interaction.depth = 4,
+# Boosting 
+# Best is 0.001,8,10000 over this large grid 
+tune.boosting <- expand.grid(shrinkage = c(0.001,0.01,0.1), 
+                  interaction.depth = c(3,4,5,6,7,8),
                   n.minobsinnode = 10,
-                  n.trees = 10000)
+                  n.trees = c(2000,5000,10000,15000))
 gbm_model <- train(Y~ .,df, 
                    method = "gbm", 
                    trControl = custom, 
                    tuneGrid =tune.boosting)
 plot(varImp(gbm_model,scale=F))
 
-#NN
+# NN
+# Best is size = 6, decay = 1
 tuned.nnet <- train(Y~.,df, method="nnet", 
                     trace=FALSE, linout=TRUE, 
                     trControl=custom, preProcess="range", 
-                    tuneGrid = expand.grid(size=c(1,2,3, 4, 5,6,7,8),decay=c(0.1,0.2,0.3,0.5)))
+                    tuneGrid = expand.grid(size=c(1:200),decay=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)))
 plot(varImp(tuned.nnet))
 
-#RF
+# RF
+# Best is mtry = 11, ntree = 2000, nodesize = 15
+all.MSEs = rep(NA, times = 80)
+all.RF = list(1:80) 
 tg <- data.frame(mtry = 3:12)
-r.f <- train(Y~., df, 
-             method = "rf", 
-             tuneGrid = tg,
-             nodesize=c(4,5,6,7,8,9),
-             ntree=500,
-             trControl=custom)
-r.f$results
+i = 1
+for (this_ntree in c(500,1000,1500,2000)) {
+  for (this_node in 2:21) {
+    r.f <- train(Y~., df, 
+                 method = "rf", 
+                 tuneGrid = tg,
+                 nodesize= this_node,
+                 ntree=this_ntree,
+                 trControl=custom)
+    all.MSEs[i] = min(r.f$results[,2])
+    all.RF[[i]] = r.f
+    i = i+1
+    print(paste0(i," of 80"))
+  }
+}
+all.RF[which.min(all.MSEs)]
+r.f$results[,2]
 plot(varImp(r.f,scale=F))
 
 #second approach
@@ -75,4 +96,5 @@ varImpPlot(cv.rf)
 model.list=list(lm=lm,ridge=ridge,lasso=lasso,step=step,nn=tuned.nnet,boosting=gbm_model,rf=r.f)
 summary(resamples(model.list))
 
+stopCluster(cl)
 

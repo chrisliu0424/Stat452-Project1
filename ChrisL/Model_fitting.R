@@ -73,7 +73,7 @@ for (i in 1:R) {
     MSPE[current_row,6] = get.MSPE(valid_df[,"Y"], cv.pls.pred)
     
     # RF
-    cv.rf <- randomForest(Y~.,data=train_df,mtry = 11, nodesize = 11,ntree = 500)
+    cv.rf <- randomForest(Y~.,data=train_df,mtry = 11, nodesize = 15,ntree = 2000)
     cv.rf.pred = predict(cv.rf,newdata = valid_df)
     MSPE[current_row,7] = get.MSPE(valid_df[,"Y"], cv.rf.pred)
     
@@ -81,7 +81,7 @@ for (i in 1:R) {
     
     # Boosting
     fit.gbm.best = gbm(Y ~ ., data =train_df, distribution = "gaussian", 
-                       n.trees = 10000, interaction.depth = 4, shrinkage = 0.1, bag.fraction = 0.6)
+                       n.trees = 10000, interaction.depth = 8, shrinkage = 0.01)
     n.trees.best = gbm.perf(fit.gbm.best, plot.it = F) * 2 # Number of trees
     pred.best = predict(fit.gbm.best, valid_df, n.trees.best)
     MSPE[current_row,8] = get.MSPE(valid_df[,"Y"], pred.best)
@@ -95,8 +95,8 @@ for (i in 1:R) {
     X.valid = rescale(X.valid.raw, X.train.raw)
     Y.valid = valid_df$Y
    
-    fit.nnet = nnet(y = Y.train, x = X.train, linout = TRUE, size = 3,
-                    decay = 1.5, maxit = 500)
+    fit.nnet = nnet(y = Y.train, x = X.train, linout = TRUE, size = 6,
+                    decay = 1, maxit = 500)
     pred.nnet = predict(fit.nnet, X.valid)
     MSPE[current_row,9] = get.MSPE(Y.valid, pred.nnet)
     current_row = current_row + 1
