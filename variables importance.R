@@ -10,6 +10,7 @@ library(nnet)
 library(doParallel)
 # Change this number for the exact computer clusters you have in you computer
 # usually CPU core *2 
+rm(list = ls())
 cl <- makePSOCKcluster(12)
 registerDoParallel(cl)
 
@@ -46,8 +47,8 @@ plot(varImp(step,scale=F))
 
 # Boosting 
 # Best is 0.001,8,10000 over this large grid 
-tune.boosting <- expand.grid(shrinkage = c(0.001,0.01,0.1), 
-                  interaction.depth = c(3,4,5,6,7,8),
+tune.boosting <- expand.grid(shrinkage = c(0.0001,0.001,0.01,0.1), 
+                  interaction.depth = c(3,4,5,6,7,8,9,10),
                   n.minobsinnode = 10,
                   n.trees = c(2000,5000,10000,15000))
 gbm_model <- train(Y~ .,df, 
@@ -57,7 +58,7 @@ gbm_model <- train(Y~ .,df,
 plot(varImp(gbm_model,scale=F))
 
 # NN
-# Best is size = 6, decay = 1
+# Best is size = 33, decay = 0.8
 tuned.nnet <- train(Y~.,df, method="nnet", 
                     trace=FALSE, linout=TRUE, 
                     trControl=custom, preProcess="range", 

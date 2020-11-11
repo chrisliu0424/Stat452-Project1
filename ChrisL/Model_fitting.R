@@ -18,7 +18,7 @@ data.matrix = data.matrix.raw[,-1]
 
 # set.seed(100)
 V = 10    # 10-fold Cross-Validation
-R = 5     # 5 Replicate
+R = 1     # number of Replicates
 n = nrow(X)
 folds = get.folds(n,V) 
 names = c('lm','StepWise','Ridge',"LASSO-min","LASSO-1SE","PLS","RF","Boosting","NN")
@@ -95,8 +95,8 @@ for (i in 1:R) {
     X.valid = rescale(X.valid.raw, X.train.raw)
     Y.valid = valid_df$Y
    
-    fit.nnet = nnet(y = Y.train, x = X.train, linout = TRUE, size = 6,
-                    decay = 1, maxit = 500)
+    fit.nnet = nnet(y = Y.train, x = X.train, linout = TRUE, size = 31,
+                    decay = 0.8, maxit = 500)
     pred.nnet = predict(fit.nnet, X.valid)
     MSPE[current_row,9] = get.MSPE(Y.valid, pred.nnet)
     current_row = current_row + 1
