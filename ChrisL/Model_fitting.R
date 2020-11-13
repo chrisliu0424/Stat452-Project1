@@ -107,44 +107,4 @@ low.s = apply(MSPE, 1, min)
 boxplot(MSPE/low.s, ylim = c(1,1.5),
         main=paste0("Plot for RMSPE on ",V,"-folds validation"))
 
-######################################### Random Forest Tuning #############################################################
-######################################### Code From Tom's Lecture ##########################################################
-# Default is mtry = 5, nodesize = 5
-# Best so far 11|11
-reps=20 # Doing lots of reps here because it's cheap
-varz = c(9,10,11,12)
-nodez = c(11,12,13,14,15,16,17,18,19)
 
-NS = length(nodez)
-M = length(varz)
-rf.oob = matrix(NA, nrow=M*NS, ncol=reps)
-
-for(r in 1:reps){
-  print(paste0(r," of 20"))
-  counter=1
-  for(m in varz){
-    for(ns in nodez){
-      pro.rfm <- randomForest(data=df, Y~., ntree=500, 
-                              mtry=m, nodesize=ns)
-      rf.oob[counter,r] = mean((predict(pro.rfm) - df$Y)^2)
-      counter=counter+1
-    }
-  }
-}
-
-parms = expand.grid(nodez,varz)
-row.names(rf.oob) = paste(parms[,2], parms[,1], sep="|")
-
-mean.oob = apply(rf.oob, 1, mean)
-min.oob = apply(rf.oob, 2, min)
-x11()
-boxplot(t(rf.oob)/min.oob, use.cols=TRUE, las=2, 
-        main="RF Tuning Variables and Node Sizes")
-write.table(rf.oob,"ChrisL/RF_tuned_3.txt",sep = ",")
-##################################################################################################################################
-rf.oob = read.table("ChrisL/RF_tuned_3.txt",sep = ",")
-x11()
-mean.oob = apply(rf.oob, 1, mean)
-min.oob = apply(rf.oob, 2, min)
-boxplot(t(rf.oob)/min.oob, use.cols=TRUE, las=2, 
-        main="RF Tuning Variables and Node Sizes")
